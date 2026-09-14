@@ -1,6 +1,6 @@
 # {{BOOK_TITLE}} — Skill Index
 
-> 本书由 book2skill 蒸馏, 共产出 **{{N}}** 个 skills。
+> 本书由 cangjie-skill 蒸馏, 共产出 **{{N}}** 个 skills。
 > 处理时间: {{DATE}}
 
 ## 关于这本书
@@ -9,6 +9,8 @@
 - **出版年**: {{YEAR}}
 - **一句话主旨**: {{ONE_LINE_THEME}}
 - **整书理解**: 见 [BOOK_OVERVIEW.md](./BOOK_OVERVIEW.md)
+- **精华长文** (不读全书看这篇): [DIGEST.md](./DIGEST.md)
+- **术语词典**: [GLOSSARY.md](./GLOSSARY.md)
 
 ---
 
@@ -49,6 +51,21 @@ graph LR
 2. **{{skill-b}}** — 依赖 skill-a
 3. **{{skill-c}}** — 依赖 skill-a, 与 skill-b 互补
 ...
+
+---
+
+## 安装使用
+
+本目录是构建产物, 宿主不会从这里加载 skill。要让 agent 真正调用, 把 skill 目录复制到宿主的 skills 目录:
+
+```bash
+# 用户级 (所有项目可用)
+cp -r {{skill-slug-1}} ~/.claude/skills/
+
+# 或项目级
+cp -r {{skill-slug-1}} <project>/.claude/skills/    # Claude Code
+cp -r {{skill-slug-1}} <project>/.cursor/skills/    # Cursor
+```
 
 ---
 

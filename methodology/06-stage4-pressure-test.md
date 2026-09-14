@@ -10,6 +10,19 @@
 
 A2 (trigger) 是拆书里最难的环节。一个 skill 做得再漂亮,trigger 不准就等于不存在。压力测试是**唯一**能在发布前发现 trigger 问题的方法。
 
+## 评测原则: 独立 sub-agent 盲测优先
+
+压力测试要尽量模拟真实调用: 一个没有参与蒸馏过程、看不到预期答案的 agent,面对用户 prompt 时是否会自然激活这个 skill。
+
+优先做法:
+- 对每条测试 prompt 启动一个干净的 sub-agent,或在资源有限时对同一个 skill 的一组 prompt 启动一个干净 sub-agent
+- 只给 sub-agent: skill 路径或 skill 内容、用户 prompt、可选的相邻 skill 列表
+- 不给 sub-agent: `type`、`expected_behavior`、`notes`、通过标准、主流程的判断
+- 要求 sub-agent 输出: `would_trigger`、`reason`、`if_triggered_action`
+- 主流程再把 sub-agent 输出和 `test-prompts.json` 的预期逐条对比,统计通过率
+
+如果当前环境没有 sub-agent 能力,才退回到主流程自测,并在 `test-results.md` 里标明这是 fallback 结果,可信度低于独立 sub-agent 盲测。
+
 ## test-prompts.json 格式 (darwin-skill 兼容)
 
 ```json
@@ -52,15 +65,21 @@ A2 (trigger) 是拆书里最难的环节。一个 skill 做得再漂亮,trigger 
 
 **没有诱饵测试的 skill 一律打回**。因为只测 positive case,skill 总会看起来"很好",但实际部署后会乱激活。
 
+**跨 skill 混淆测试 (硬性要求)**: 诱饵中至少 1 条必须是"应该触发同书另一个 skill"的 prompt。同一本书拆出的 10+ 个 skill 之间互相抢调用,是部署后最常见的真实故障 — 只测"完全无关的场景"发现不了它。盲测时把整包所有 skill 的 name + description 列表给 sub-agent,让它做"该激活哪一个"的选择题,而不只是"要不要激活这一个"的判断题。
+
 ## 执行流程
 
 1. 对每个 skill,按模板写 `test-prompts.json`
-2. 本地跑一遍: 对每个 test_case, 让 Claude 独立判断"我会在这个场景下调用这个 skill 吗",记录判断和理由
-3. 统计通过率:
+2. 对每个 test_case 做独立盲测: 隐藏 `type` / `expected_behavior` / `notes`,让 sub-agent 判断"是否会调用这个 skill",记录判断和理由
+3. 主流程对照 `test-prompts.json` 判卷:
+   - `should_trigger`: sub-agent 应明确调用该 skill,且执行动作符合 `expected_behavior`
+   - `should_not_trigger`: sub-agent 不应调用该 skill,诱饵测试容错为 0
+   - `edge_case`: sub-agent 的判断要符合 `expected_behavior` 中定义的边界理由
+4. 统计通过率:
    - **100% 通过** → 接受
    - **≥80% 通过** → 分析失败 case, 决定是修 A2 还是修测试 (但修测试要警惕自我合理化)
    - **<80% 通过** → **必须回炉重做阶段 2**,不是小修
-4. 修复后重新跑,直到通过
+5. 修复后重新跑,直到通过
 
 ## 判断"修 skill 还是修测试"
 
@@ -73,9 +92,6 @@ A2 (trigger) 是拆书里最难的环节。一个 skill 做得再漂亮,trigger 
 - `<skill-dir>/test-prompts.json` — darwin 兼容格式
 - `<skill-dir>/test-results.md` — 本次测试的通过率和失败分析 (审计用)
 
-## 与 darwin-skill 的交接
+## 下一步
 
-所有 skill 全部通过后,告诉用户:
-> 已完成。如需持续进化,可以喂给 darwin-skill:
-> `darwin evolve books/<slug>/`
-> 它会用这里的 test-prompts.json 做 ratcheting 自动进化。
+所有 skill 全部通过后,进入阶段 5 (交付),见 `07-stage5-deliver.md`: 生成面向读者的 DIGEST.md 精华长文,并把 skill 安装到用户的 skills 目录 — 之后才向用户提 darwin-skill 自动进化。

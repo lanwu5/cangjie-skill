@@ -2,20 +2,26 @@
 name: {{skill-slug}}
 description: |
   {{何时调用 + 何时不调用 + 关键 trigger 信号, ≤300 字}}
-  基于 A2 段, 用于 Claude 激活判断。示例:
-  用户在纠结一个决策、列举正面理由却理不出头绪时;或在问"怎么做 X 才能成功"时。
-  不适用于: 纯信息查询、日常琐碎选择。
 source_book: 《{{BOOK_TITLE}}》 {{AUTHOR}}
 source_chapter: {{章节}}
 tags: [{{tag1}}, {{tag2}}]
 related_skills: []    # 阶段 3 填充
 ---
 
+<!--
+  填写说明 (生成最终 skill 时删除本注释块):
+  - description: 基于 A2 段浓缩, ≤300 字, 必须含"何时调用 + 何时不调用 + 关键 trigger 信号"。
+    好例: "用户在纠结一个决策、列举正面理由却理不出头绪时;或在问'怎么做 X 才能成功'时。不适用于: 纯信息查询、日常琐碎选择。"
+    关键 trigger 词建议中英双写, 提高英文提问场景的触发准确率。
+  - source_chapter: 书填章节/页码; 视频填时间戳/分 P; 播客填集数。
+  - source_book / tags / related_skills 为审计与链接用的扩展字段, 宿主加载 skill 时只读 name + description。
+-->
+
 # {{Skill Title}}
 
 ## R — 原文 (Reading)
 
-> {{原文引用, ≤150 字, 必须标注章节/页码}}
+> {{原文引用, ≤150 字 (英文 ≤100 词), 必须标注章节/页码/时间戳}}
 >
 > — {{AUTHOR}}, {{CHAPTER}}
 

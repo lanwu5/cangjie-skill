@@ -19,6 +19,18 @@
 
 并在一次调用中通过 Agent 工具 **同时 spawn 5 个**,不是串行。
 
+**降级方案**: 当前环境不支持并行 sub-agent 时,用同样 5 个 extractor prompt 串行执行 (每次以"干净视角"执行一个 extractor 的职责,不带上一个 extractor 的判断),产出格式不变。
+
+## 长文本分块策略 (超出单个 sub-agent 上下文时)
+
+一本大部头 (如全五卷选集) 或几小时视频的转写稿,可能超出单个 sub-agent 能一次读完的上下文。此时:
+
+1. **切块**: 按章节/卷/分 P 等自然边界切块,每块控制在 sub-agent 能连同 `BOOK_OVERVIEW.md` 一起舒适读完的规模 (经验值: 单块 ≤5 万字)
+2. **全局锚点**: 每一块都必须附带 `BOOK_OVERVIEW.md` — 它是 extractor 判断"这段内容在全书中扮演什么角色"的锚点,不能省
+3. **逐块扫描**: extractor 逐块提取候选,标注每条候选来自哪一块 (source_chapter 字段天然承载)
+4. **块间汇总**: 全部块扫完后,extractor 自己先做一轮合并 — 同一方法论在多块中出现的,合并成一条并保留所有出处 (这些多出处恰好是阶段 1.5 V1 跨域验证的证据)
+5. 汇总后的结果才写入 `candidates/<type>.md`
+
 | # | extractor | 查找对象 | 产出文件 |
 |---|---|---|---|
 | 1 | framework-extractor | 思维模型 / 决策框架 / 推理方法 | `candidates/frameworks.md` |
@@ -36,7 +48,7 @@ id: f01                           # 类型缩写 + 序号
 title: 逆向思维                    # 简短标题
 type: framework                   # framework / principle / case / counter-example / term
 source_chapter: 第三讲             # 书中位置
-source_quote: |                   # 原文引用 ≤150 字
+source_quote: |                   # 原文引用 ≤150 字 (英文 ≤100 词)
   "反过来想,总是反过来想..."
 summary: |                        # 用自己的话,5-10 行
   ...
